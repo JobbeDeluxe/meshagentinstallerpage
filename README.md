@@ -2,7 +2,7 @@
 
 Kleine Web-App fuer MeshCentral: Eine Person gibt einen Code ein und bekommt danach genau den passenden Agent-Download plus eine kurze Anleitung.
 
-Gedacht fuer eine Subdomain wie `install.unlimited8.de`, damit Familie oder Kunden ohne technisches Wissen den MeshCentral-Agent installieren koennen.
+Gedacht fuer eine Subdomain wie `install.example.com`, damit Familie oder Kunden ohne technisches Wissen den MeshCentral-Agent installieren koennen.
 
 ## Funktionen
 
@@ -43,14 +43,14 @@ python -c "import secrets; print(secrets.token_hex(32))"
 
 ## Subdomain verbinden
 
-Mit Nginx Proxy Manager, Traefik oder Caddy leitest du `install.unlimited8.de` auf den Container weiter:
+Mit Nginx Proxy Manager, Traefik oder Caddy leitest du `install.example.com` auf den Container weiter:
 
 - Ziel-Host: IP deines Docker-Hosts
 - Ziel-Port: `5055`
 - SSL aktivieren
 - Optional: HTTP nach HTTPS weiterleiten
 
-Danach ist die Nutzerseite unter `https://install.unlimited8.de` erreichbar und der Admin unter `https://install.unlimited8.de/admin`.
+Danach ist die Nutzerseite unter `https://install.example.com` erreichbar und der Admin unter `https://install.example.com/admin`.
 
 ## Installation auf OpenMediaVault
 
@@ -61,7 +61,7 @@ Der einfachste Weg auf OMV ist per SSH mit Docker Compose. Die OMV-Compose-Oberf
 - Docker ist auf OMV installiert.
 - Docker Compose funktioniert mit `docker compose version`.
 - SSH ist in OMV aktiviert.
-- Optional, aber praktisch: Nginx Proxy Manager oder ein anderer Reverse Proxy fuer `install.unlimited8.de`.
+- Optional, aber praktisch: Nginx Proxy Manager oder ein anderer Reverse Proxy fuer `install.example.com`.
 
 Wenn du Docker ueber OMV-Extras nutzt, findest du die Compose-Verwaltung normalerweise unter `Services > Compose`. Die Compose-Dateien werden dort ueber den Tab `Files` verwaltet.
 
@@ -149,7 +149,7 @@ Wenn du Nginx Proxy Manager nutzt:
 
 1. `Proxy Hosts` oeffnen.
 2. `Add Proxy Host`.
-3. Domain Names: `install.unlimited8.de`.
+3. Domain Names: `install.example.com`.
 4. Scheme: `http`.
 5. Forward Hostname / IP: IP deines OMV-Servers.
 6. Forward Port: `5055`.
@@ -161,7 +161,7 @@ Wenn du Nginx Proxy Manager nutzt:
 Danach:
 
 ```text
-https://install.unlimited8.de
+https://install.example.com
 ```
 
 ### 7. Codes anlegen
@@ -169,7 +169,7 @@ https://install.unlimited8.de
 Oeffne:
 
 ```text
-https://install.unlimited8.de/admin
+https://install.example.com/admin
 ```
 
 Dann mit deinem `ADMIN_PASSWORD` einloggen und neue Codes mit MeshCentral-Download-Link anlegen.
