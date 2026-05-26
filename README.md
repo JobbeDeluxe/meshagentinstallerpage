@@ -21,12 +21,26 @@ Gedacht fuer eine Subdomain wie `install.example.com`, damit Familie oder Kunden
 4. Container starten:
 
 ```bash
-docker compose up -d --build
+docker compose up -d
 ```
 
 Die Seite laeuft danach auf `http://SERVER-IP:5055`.
 
 Der Admin-Bereich ist auf `http://SERVER-IP:5055/admin`.
+
+Das normale `docker-compose.yml` nutzt ein fertiges Image:
+
+```text
+ghcr.io/jobbedeluxe/meshagentinstallerpage:latest
+```
+
+Dieses Image wird automatisch per GitHub Actions gebaut und in GitHub Container Registry veroeffentlicht.
+
+Wenn du lokal selbst bauen willst, nutze stattdessen:
+
+```bash
+docker compose -f docker-compose.build.yml up -d --build
+```
 
 ## Beispiel `.env`
 
@@ -54,80 +68,81 @@ Danach ist die Nutzerseite unter `https://install.example.com` erreichbar und de
 
 ## Installation auf OpenMediaVault
 
-Der einfachste Weg auf OMV ist per SSH mit Docker Compose. Die OMV-Compose-Oberflaeche kann Container verwalten, aber fuer diese App ist ein Git-Checkout auf dem Server praktischer, weil der Container lokal aus `Dockerfile`, `app.py` und den Templates gebaut wird.
+In OMV musst du kein Dockerfile einfuegen. Ein Dockerfile beschreibt nur, wie ein Image gebaut wird. OMV soll aber am besten ein fertiges Image starten. Dafuer nutzt du eine Compose-Datei mit `image: ghcr.io/jobbedeluxe/meshagentinstallerpage:latest`.
+
+Wenn OMV beim ersten Start `unauthorized` oder `pull access denied` meldet, ist das Container-Paket in GitHub noch nicht oeffentlich sichtbar. Dann in GitHub beim Package `meshagentinstallerpage` die Visibility auf `Public` stellen oder kurz warten, bis der erste GitHub-Actions-Build fertig ist.
 
 ### Voraussetzungen
 
 - Docker ist auf OMV installiert.
-- Docker Compose funktioniert mit `docker compose version`.
-- SSH ist in OMV aktiviert.
+- Das OMV-Compose-Plugin ist installiert.
 - Optional, aber praktisch: Nginx Proxy Manager oder ein anderer Reverse Proxy fuer `install.example.com`.
 
 Wenn du Docker ueber OMV-Extras nutzt, findest du die Compose-Verwaltung normalerweise unter `Services > Compose`. Die Compose-Dateien werden dort ueber den Tab `Files` verwaltet.
 
-### 1. Per SSH auf OMV verbinden
+### 1. Datenordner anlegen
+
+Lege auf OMV einen Ordner fuer die Codes an, z. B.:
 
 ```bash
-ssh root@DEINE-OMV-IP
+/srv/appdata/meshagentinstallerpage/data
 ```
 
-Falls du dich nicht als `root` einloggst, setze vor Docker-Befehle ggf. `sudo`.
+Du kannst auch einen Ordner auf deiner Datenplatte nehmen. Wichtig ist nur, dass der Pfad im Compose-File unten dazu passt.
 
-### 2. Zielordner anlegen
+### 2. Compose-Datei in OMV einfuegen
 
-Nimm am besten einen Ordner auf deiner Datenplatte, nicht auf dem kleinen OMV-Systemlaufwerk. Beispiel:
+In OMV:
 
-```bash
-mkdir -p /srv/appdata
-cd /srv/appdata
+1. `Services > Compose > Files` oeffnen.
+2. `Add` anklicken.
+3. Name z. B. `mesh-agent-installer`.
+4. Diese Compose-Datei einfuegen:
+
+```yaml
+services:
+  mesh-installer:
+    image: ghcr.io/jobbedeluxe/meshagentinstallerpage:latest
+    container_name: mesh-installer
+    restart: unless-stopped
+    ports:
+      - "5055:5055"
+    environment:
+      ADMIN_PASSWORD: "HIER-EIN-LANGES-PASSWORT"
+      SECRET_KEY: "HIER-EIN-LANGER-ZUFAELLIGER-WERT"
+      CODES_FILE: /data/codes.json
+    volumes:
+      - /srv/appdata/meshagentinstallerpage/data:/data
 ```
 
-Wenn du bereits einen Appdata-Ordner hast, nimm diesen stattdessen.
+Passe diese Werte an:
 
-### 3. Repo klonen
+- `ADMIN_PASSWORD`: Passwort fuer `/admin`
+- `SECRET_KEY`: langer Zufallswert fuer Sessions
+- `/srv/appdata/meshagentinstallerpage/data`: dein echter OMV-Pfad fuer persistente Codes
 
-```bash
-git clone https://github.com/JobbeDeluxe/meshagentinstallerpage.git
-cd meshagentinstallerpage
-```
-
-Falls `git` fehlt:
-
-```bash
-apt update
-apt install -y git
-```
-
-### 4. `.env` anlegen
-
-```bash
-cp .env.example .env
-nano .env
-```
-
-Inhalt anpassen:
-
-```env
-ADMIN_PASSWORD=hier-ein-langes-admin-passwort
-SECRET_KEY=hier-einen-langen-zufaelligen-wert-eintragen
-```
-
-Einen Secret-Key kannst du auf OMV so erzeugen:
+Einen Secret-Key kannst du z. B. auf deinem PC oder per SSH auf OMV erzeugen:
 
 ```bash
 python3 -c "import secrets; print(secrets.token_hex(32))"
 ```
 
-### 5. Container starten
+### 3. Container starten
+
+In OMV bei der Compose-Datei:
+
+- `Save`
+- danach `Up`
+
+Oder per SSH im passenden Compose-Ordner:
 
 ```bash
-docker compose up -d --build
+docker compose up -d
 ```
 
-Danach testen:
+### 4. Testen
 
 ```bash
-docker compose ps
 curl http://127.0.0.1:5055/healthz
 ```
 
@@ -143,7 +158,35 @@ Admin:
 http://DEINE-OMV-IP:5055/admin
 ```
 
-### 6. Subdomain in Nginx Proxy Manager
+### Alternative: Repo auf OMV klonen
+
+Wenn du lieber mit SSH arbeitest, kannst du auch das Repository klonen:
+
+```bash
+ssh root@DEINE-OMV-IP
+mkdir -p /srv/appdata
+cd /srv/appdata
+git clone https://github.com/JobbeDeluxe/meshagentinstallerpage.git
+cd meshagentinstallerpage
+cp .env.example .env
+nano .env
+docker compose up -d
+```
+
+Das ist nicht zwingend noetig, weil OMV das fertige Image direkt ziehen kann.
+
+### Image manuell aktualisieren
+
+Wenn eine neue Version verfuegbar ist:
+
+```bash
+docker compose pull
+docker compose up -d
+```
+
+In OMV kannst du dafuer bei der Compose-Datei ebenfalls `Pull` und danach `Up` nutzen.
+
+### 5. Subdomain in Nginx Proxy Manager
 
 Wenn du Nginx Proxy Manager nutzt:
 
@@ -164,7 +207,7 @@ Danach:
 https://install.example.com
 ```
 
-### 7. Codes anlegen
+### 6. Codes anlegen
 
 Oeffne:
 
@@ -174,17 +217,7 @@ https://install.example.com/admin
 
 Dann mit deinem `ADMIN_PASSWORD` einloggen und neue Codes mit MeshCentral-Download-Link anlegen.
 
-### Updates
-
-Wenn spaeter eine neue Version im GitHub-Repo liegt:
-
-```bash
-cd /srv/appdata/meshagentinstallerpage
-git pull
-docker compose up -d --build
-```
-
-Die Codes bleiben erhalten, weil sie im lokalen Ordner `data/` liegen.
+Die Codes bleiben erhalten, weil sie im gemounteten `data`-Ordner liegen.
 
 ## MeshCentral Download-Link finden
 

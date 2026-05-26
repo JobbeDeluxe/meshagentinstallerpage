@@ -1,6 +1,6 @@
 services:
   mesh-installer:
-    image: ghcr.io/jobbedeluxe/meshagentinstallerpage:latest
+    build: .
     container_name: mesh-installer
     restart: unless-stopped
     ports:
