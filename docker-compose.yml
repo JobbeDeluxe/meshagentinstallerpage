@@ -1,0 +1,13 @@
+services:
+  mesh-installer:
+    build: .
+    container_name: mesh-installer
+    restart: unless-stopped
+    ports:
+      - "5055:5055"
+    environment:
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:?Set ADMIN_PASSWORD in .env}
+      SECRET_KEY: ${SECRET_KEY:?Set SECRET_KEY in .env}
+      CODES_FILE: /data/codes.json
+    volumes:
+      - ./data:/data

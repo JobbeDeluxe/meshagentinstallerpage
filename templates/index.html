@@ -1,0 +1,347 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Fernwartung installieren</title>
+  <style>
+    :root {
+      --bg: #f5f7fb;
+      --panel: #ffffff;
+      --text: #152033;
+      --muted: #58677f;
+      --line: #d9e0ea;
+      --brand: #0969da;
+      --brand-dark: #0757b7;
+      --success: #147a43;
+      --error: #bc2c2c;
+      --soft: #eef6ff;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: var(--bg);
+      color: var(--text);
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      line-height: 1.5;
+    }
+
+    main {
+      width: min(100%, 760px);
+      margin: 0 auto;
+      padding: 32px 18px;
+    }
+
+    .shell {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: 0 16px 50px rgba(21, 32, 51, 0.08);
+      overflow: hidden;
+    }
+
+    .hero {
+      padding: 34px 28px 26px;
+      border-bottom: 1px solid var(--line);
+      background: linear-gradient(180deg, #ffffff 0%, #f9fbff 100%);
+    }
+
+    .eyebrow {
+      margin: 0 0 10px;
+      color: var(--success);
+      font-size: 0.84rem;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+
+    h1 {
+      margin: 0 0 12px;
+      font-size: clamp(2rem, 7vw, 3.15rem);
+      line-height: 1.05;
+      letter-spacing: 0;
+    }
+
+    .lead {
+      margin: 0;
+      max-width: 58ch;
+      color: var(--muted);
+      font-size: 1.08rem;
+    }
+
+    .content { padding: 28px; }
+
+    .field-label {
+      display: block;
+      margin-bottom: 10px;
+      font-weight: 700;
+      font-size: 1rem;
+    }
+
+    .code-row {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 12px;
+    }
+
+    input {
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      color: var(--text);
+      font: 700 1.45rem/1.2 ui-monospace, "SFMono-Regular", Consolas, monospace;
+      letter-spacing: 0.12em;
+      padding: 16px 18px;
+      text-transform: uppercase;
+    }
+
+    input:focus {
+      border-color: var(--brand);
+      outline: 3px solid rgba(9, 105, 218, 0.16);
+    }
+
+    button,
+    .download-button {
+      align-items: center;
+      background: var(--brand);
+      border: 0;
+      border-radius: 8px;
+      color: #ffffff;
+      cursor: pointer;
+      display: inline-flex;
+      font: 700 1rem/1 system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      gap: 8px;
+      justify-content: center;
+      min-height: 56px;
+      padding: 0 22px;
+      text-decoration: none;
+      transition: background 0.15s ease, transform 0.15s ease;
+      white-space: nowrap;
+    }
+
+    button:hover,
+    .download-button:hover { background: var(--brand-dark); }
+
+    button:active,
+    .download-button:active { transform: translateY(1px); }
+
+    button:disabled {
+      cursor: wait;
+      opacity: 0.7;
+    }
+
+    .message {
+      display: none;
+      margin: 14px 0 0;
+      color: var(--error);
+      font-weight: 700;
+    }
+
+    .result { display: none; }
+
+    .device {
+      display: inline-flex;
+      margin: 0 0 22px;
+      border-radius: 999px;
+      background: #edf7f0;
+      color: var(--success);
+      font-weight: 800;
+      padding: 8px 12px;
+    }
+
+    .steps {
+      display: grid;
+      gap: 14px;
+      margin: 0 0 24px;
+      padding: 0;
+      list-style: none;
+    }
+
+    .step {
+      display: grid;
+      grid-template-columns: 36px minmax(0, 1fr);
+      gap: 12px;
+      align-items: start;
+    }
+
+    .step-number {
+      align-items: center;
+      background: var(--soft);
+      border: 1px solid #cae2ff;
+      border-radius: 8px;
+      color: var(--brand);
+      display: inline-flex;
+      font-weight: 800;
+      height: 36px;
+      justify-content: center;
+      width: 36px;
+    }
+
+    .step p {
+      margin: 4px 0 0;
+      color: var(--muted);
+    }
+
+    .step strong { color: var(--text); }
+
+    .download-button {
+      width: 100%;
+      min-height: 64px;
+      font-size: 1.1rem;
+    }
+
+    .secondary {
+      margin-top: 18px;
+      background: transparent;
+      border: 0;
+      color: var(--muted);
+      cursor: pointer;
+      font: inherit;
+      min-height: auto;
+      padding: 0;
+      text-decoration: underline;
+      white-space: normal;
+    }
+
+    .footer {
+      color: var(--muted);
+      font-size: 0.92rem;
+      margin: 20px 4px 0;
+      text-align: center;
+    }
+
+    @media (max-width: 560px) {
+      main { padding: 18px 12px; }
+      .hero,
+      .content { padding: 24px 18px; }
+      .code-row { grid-template-columns: 1fr; }
+      button,
+      .download-button { width: 100%; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <section class="shell" aria-live="polite">
+      <div class="hero">
+        <p class="eyebrow">Sicherer Zugang per Code</p>
+        <h1>Fernwartung installieren</h1>
+        <p class="lead">Gib den Code ein, den du bekommen hast. Danach erscheint der passende Download mit einer kurzen Anleitung.</p>
+      </div>
+
+      <div class="content">
+        <div id="code-panel">
+          <label class="field-label" for="code-input">Dein Code</label>
+          <div class="code-row">
+            <input id="code-input" name="code" maxlength="12" autocomplete="one-time-code" spellcheck="false" placeholder="A3F7K2">
+            <button id="submit-button" type="button">Weiter</button>
+          </div>
+          <p class="message" id="error-message">Code nicht gefunden. Bitte pruefe ihn nochmal.</p>
+        </div>
+
+        <div class="result" id="result-panel">
+          <div class="device" id="device-label"></div>
+
+          <ol class="steps">
+            <li class="step">
+              <span class="step-number">1</span>
+              <p>Klicke auf <strong>Download starten</strong>.</p>
+            </li>
+            <li class="step">
+              <span class="step-number">2</span>
+              <p>&Ouml;ffne die heruntergeladene Datei. Sie hei&szlig;t meistens <strong>MeshAgent.exe</strong>.</p>
+            </li>
+            <li class="step">
+              <span class="step-number">3</span>
+              <p>Wenn Windows fragt, ob du die App zulassen m&ouml;chtest, klicke auf <strong>Ja</strong>.</p>
+            </li>
+            <li class="step">
+              <span class="step-number">4</span>
+              <p>Fertig. Danach musst du nichts weiter einstellen.</p>
+            </li>
+          </ol>
+
+          <a class="download-button" id="download-link" href="#" rel="noopener">Download starten</a>
+          <button class="secondary" id="reset-button" type="button">Anderen Code eingeben</button>
+        </div>
+      </div>
+    </section>
+
+    <p class="footer">Bei Fragen einfach anrufen. Kein IT-Wissen noetig.</p>
+  </main>
+
+  <script>
+    const input = document.getElementById("code-input");
+    const submitButton = document.getElementById("submit-button");
+    const errorMessage = document.getElementById("error-message");
+    const codePanel = document.getElementById("code-panel");
+    const resultPanel = document.getElementById("result-panel");
+    const deviceLabel = document.getElementById("device-label");
+    const downloadLink = document.getElementById("download-link");
+    const resetButton = document.getElementById("reset-button");
+
+    input.addEventListener("input", () => {
+      input.value = input.value.toUpperCase().replace(/[^A-Z0-9]/g, "");
+      errorMessage.style.display = "none";
+    });
+
+    input.addEventListener("keydown", (event) => {
+      if (event.key === "Enter") {
+        lookup();
+      }
+    });
+
+    submitButton.addEventListener("click", lookup);
+    resetButton.addEventListener("click", reset);
+
+    async function lookup() {
+      const code = input.value.trim();
+      if (code.length < 4) {
+        errorMessage.textContent = "Bitte gib den vollstaendigen Code ein.";
+        errorMessage.style.display = "block";
+        return;
+      }
+
+      submitButton.disabled = true;
+      submitButton.textContent = "Pruefe...";
+
+      try {
+        const response = await fetch("/api/lookup", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ code }),
+        });
+
+        if (!response.ok) {
+          throw new Error("not-found");
+        }
+
+        const data = await response.json();
+        deviceLabel.textContent = data.name;
+        downloadLink.href = data.download_url;
+        codePanel.style.display = "none";
+        resultPanel.style.display = "block";
+        downloadLink.focus();
+      } catch (error) {
+        errorMessage.textContent = error.message === "not-found"
+          ? "Code nicht gefunden. Bitte pruefe ihn nochmal."
+          : "Verbindungsfehler. Bitte lade die Seite neu.";
+        errorMessage.style.display = "block";
+      } finally {
+        submitButton.disabled = false;
+        submitButton.textContent = "Weiter";
+      }
+    }
+
+    function reset() {
+      resultPanel.style.display = "none";
+      codePanel.style.display = "block";
+      input.value = "";
+      input.focus();
+    }
+  </script>
+</body>
+</html>
